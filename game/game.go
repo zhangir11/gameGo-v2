@@ -131,8 +131,8 @@ func (world *World) AddPlayer() *Unit {
 	unit := &Unit{
 		ID:         id,
 		Action:     ActionIdle,
-		X:          rnd.Float64() * 320,
-		Y:          rnd.Float64() * 240,
+		X:          float64(320 / 2),
+		Y:          float64(240 / 2),
 		Frame:      rnd.Intn(4),
 		SpriteName: skins[rnd.Intn(len(skins))],
 	}
