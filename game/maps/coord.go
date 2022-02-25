@@ -1,4 +1,4 @@
-package game
+package maps
 
 type Coordinate struct {
 	X float64 `json:"x"`
@@ -11,4 +11,9 @@ func CreateCoordinate(x, y int) *Coordinate {
 	co.X = float64(x)
 	co.Y = float64(y)
 	return &co
+}
+
+//GetCoordinate return X, Y Coordinate
+func (co *Coordinate) GetCoordinate() (float64, float64) {
+	return co.X, co.Y
 }

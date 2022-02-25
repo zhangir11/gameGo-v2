@@ -1,4 +1,4 @@
-package game
+package maps
 
 const (
 	a string = "floor_1"

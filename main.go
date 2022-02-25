@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"rpg/game"
+	"rpg/game/units"
 	"rpg/input"
 	"rpg/rander"
 
@@ -20,7 +21,7 @@ var c *websocket.Conn
 func init() {
 	world = game.World{
 		IsServer: false,
-		Units:    game.Units{},
+		Units:    units.Units{},
 	}
 }
 

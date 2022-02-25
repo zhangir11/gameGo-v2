@@ -2,31 +2,18 @@ package game
 
 import (
 	"encoding/json"
-	"math/rand"
-	"time"
+	"log"
+	"rpg/game/player"
+	"rpg/game/units"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	uuid "github.com/satori/go.uuid"
 )
 
-type Unit struct {
-	ID                  string        `json:"id"`
-	X                   float64       `json:"x"`
-	Y                   float64       `json:"y"`
-	Road                *Coordinate   `json:"coord"`
-	SpriteName          string        `json:"sprite_name"`
-	Action              string        `json:"action"`
-	Frame               int           `json:"frame"`
-	HorizontalDirection DirectionType `json:"horizontal"`
-}
-
-type Units map[string]*Unit
-
 type World struct {
-	MyID     string `json:"-"`
-	IsServer bool   `json:"-"`
-	Units    `json:"units"`
-	Maps     *ebiten.Image
+	MyID        string `json:"-"`
+	IsServer    bool   `json:"-"`
+	units.Units `json:"units"`
+	Maps        *ebiten.Image
 }
 
 type Event struct {
@@ -35,12 +22,12 @@ type Event struct {
 }
 
 type EventConnection struct {
-	Unit
+	Player player.Player `json:"player"`
 }
 
 type EventMove struct {
-	UnitID    string        `json:"unit_id"`
-	Direction DirectionType `json:"direction"`
+	UnitID    string              `json:"unit_id"`
+	Direction units.DirectionType `json:"direction"`
 }
 
 type EventIdle struct {
@@ -48,8 +35,8 @@ type EventIdle struct {
 }
 
 type EventInit struct {
-	PlayerID string `json:"player_id"`
-	Units    Units  `json:"units"`
+	PlayerID string      `json:"player_id"`
+	Units    units.Units `json:"units"`
 }
 
 const (
@@ -59,28 +46,21 @@ const (
 	EventTypeInit       = "init"
 )
 
-const (
-	ActionRun  = "run"
-	ActionIdle = "idle"
-)
-
-type DirectionType int
-
-const (
-	DirectionUp    DirectionType = 0
-	DirectionDown  DirectionType = 1
-	DirectionLeft  DirectionType = 2
-	DirectionRight DirectionType = 3
-)
-
 func (world *World) HandleEvent(event *Event) {
 	switch event.Type {
 	case EventTypeConnection:
-		str, _ := json.Marshal(event.Data)
+		str, err := json.Marshal(event.Data)
+		if err != nil {
+			log.Panic(err)
+		}
 		var ev EventConnection
-		json.Unmarshal(str, &ev)
+		err = json.Unmarshal(str, &ev)
 
-		world.Units[ev.ID] = &ev.Unit
+		if err != nil {
+			log.Panic(err)
+		}
+
+		world.Units[ev.Player.ID] = &ev.Player
 
 	case EventTypeMove:
 		str, _ := json.Marshal(event.Data)
@@ -88,20 +68,22 @@ func (world *World) HandleEvent(event *Event) {
 		json.Unmarshal(str, &ev)
 
 		unit := world.Units[ev.UnitID]
-		unit.Action = ActionRun
+
+		unit.UpdateAction(units.ActionRun)
 
 		switch ev.Direction {
-		case DirectionUp:
-			unit.Y--
-		case DirectionDown:
-			unit.Y++
-		case DirectionLeft:
-			unit.X--
-			unit.HorizontalDirection = ev.Direction
-		case DirectionRight:
-			unit.X++
-			unit.HorizontalDirection = ev.Direction
+		case units.DirectionUp:
+			unit.UpdateCoordinate(0, -1)
+		case units.DirectionDown:
+			unit.UpdateCoordinate(0, 1)
+		case units.DirectionLeft:
+			unit.UpdateCoordinate(-1, 0)
+			// unit.HorizontalDirection = ev.Direction
+		case units.DirectionRight:
+			unit.UpdateCoordinate(1, 0)
+			// unit.HorizontalDirection = ev.Direction
 		}
+		world.Units[ev.UnitID] = unit
 
 	case EventTypeIdle:
 		str, _ := json.Marshal(event.Data)
@@ -109,7 +91,7 @@ func (world *World) HandleEvent(event *Event) {
 		json.Unmarshal(str, &ev)
 
 		unit := world.Units[ev.UnitID]
-		unit.Action = ActionIdle
+		unit.UpdateAction(units.ActionIdle)
 
 	case EventTypeInit:
 		str, _ := json.Marshal(event.Data)
@@ -124,24 +106,8 @@ func (world *World) HandleEvent(event *Event) {
 	}
 }
 
-func (world *World) AddPlayer() *Unit {
-	skins := []string{
-		"elf_f", "elf_m", "goblin",
-		"ice_zombie", "imp", "knight_f",
-		"knight_m", "lizard_f", "lizard_m",
-		"necromancer",
-	}
-	id := uuid.NewV4().String()
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	unit := &Unit{
-		ID:         id,
-		Action:     ActionIdle,
-		X:          float64(320 / 2),
-		Y:          float64(240 / 2),
-		Frame:      rnd.Intn(4),
-		SpriteName: skins[rnd.Intn(len(skins))],
-	}
-	world.Units[unit.ID] = unit
-
-	return unit
+func (world *World) AddUnit(unit units.IsUnit) *units.IsUnit {
+	unit.Create()
+	world.Units[unit.GetID()] = unit
+	return &unit
 }

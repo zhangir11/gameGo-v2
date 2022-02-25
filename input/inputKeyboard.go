@@ -2,6 +2,7 @@ package input
 
 import (
 	"rpg/game"
+	"rpg/game/units"
 
 	"github.com/gorilla/websocket"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -18,35 +19,35 @@ func HandleKeyPress(c *websocket.Conn, world *game.World) {
 
 	//handler left
 	crEvent.keys = []ebiten.Key{ebiten.KeyA, ebiten.KeyLeft}
-	crEvent.dir = game.DirectionLeft
+	crEvent.dir = units.DirectionLeft
 	if crEvent.createEventMove() {
 		return
 	}
 
 	//handler right
 	crEvent.keys = []ebiten.Key{ebiten.KeyD, ebiten.KeyRight}
-	crEvent.dir = game.DirectionRight
+	crEvent.dir = units.DirectionRight
 	if crEvent.createEventMove() {
 		return
 	}
 
 	//handler Up
 	crEvent.keys = []ebiten.Key{ebiten.KeyW, ebiten.KeyUp}
-	crEvent.dir = game.DirectionUp
+	crEvent.dir = units.DirectionUp
 	if crEvent.createEventMove() {
 		return
 	}
 
 	//handler Down
 	crEvent.keys = []ebiten.Key{ebiten.KeyS, ebiten.KeyDown}
-	crEvent.dir = game.DirectionDown
+	crEvent.dir = units.DirectionDown
 
 	if crEvent.createEventMove() {
 		return
 	}
 
 	//handle Idle
-	if world.Units[world.MyID].Action == game.ActionRun && world.Units[world.MyID].Road == nil {
+	if world.Units[world.MyID].GetAction() == units.ActionRun && world.Units[world.MyID].GetRoad() == nil {
 		c.WriteJSON(game.Event{
 			Type: game.EventTypeIdle,
 			Data: game.EventIdle{
@@ -60,13 +61,13 @@ type createEventKey struct {
 	c     *websocket.Conn
 	world *game.World
 	keys  []ebiten.Key
-	dir   game.DirectionType
+	dir   units.DirectionType
 }
 
 func (cr *createEventKey) createEventMove() bool {
 	for _, key := range cr.keys {
 		if ebiten.IsKeyPressed(key) {
-			cr.world.Units[cr.world.MyID].Road = nil
+			cr.world.Units[cr.world.MyID].UpdateRoad(nil)
 			cr.c.WriteJSON(
 				game.Event{
 					Type: game.EventTypeMove,

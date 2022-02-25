@@ -10,6 +10,8 @@ import (
 	"log"
 	"net/http"
 	"rpg/game"
+	"rpg/game/player"
+
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -136,11 +138,13 @@ func serveWs(hub *Hub, world *game.World, w http.ResponseWriter, r *http.Request
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
-	player := world.AddPlayer()
+	var pl player.Player
+
+	world.AddUnit(&pl)
 	conn.WriteJSON(game.Event{
 		Type: game.EventTypeInit,
 		Data: game.EventInit{
-			PlayerID: player.ID,
+			PlayerID: pl.GetID(),
 			Units:    world.Units,
 		},
 	})
@@ -148,7 +152,7 @@ func serveWs(hub *Hub, world *game.World, w http.ResponseWriter, r *http.Request
 	msg, _ := json.Marshal(game.Event{
 		Type: game.EventTypeConnection,
 		Data: game.EventConnection{
-			*world.Units[player.ID],
+			Player: pl,
 		},
 	})
 
