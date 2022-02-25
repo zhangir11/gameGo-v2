@@ -10,59 +10,43 @@ import (
 //HandleKeyPress handler key pressed
 func HandleKeyPress(c *websocket.Conn, world *game.World) {
 	// Write your game's logical update.
-	if ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		c.WriteJSON(
-			game.Event{
-				Type: game.EventTypeMove,
-				Data: game.EventMove{
-					UnitID:    world.MyID,
-					Direction: game.DirectionLeft,
-				},
-			})
 
+	var crEvent createEventKey
+
+	crEvent.c = c
+	crEvent.world = world
+
+	//handler left
+	crEvent.keys = []ebiten.Key{ebiten.KeyA, ebiten.KeyLeft}
+	crEvent.dir = game.DirectionLeft
+	if crEvent.createEventMove() {
 		return
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyD) || ebiten.IsKeyPressed(ebiten.KeyRight) {
-		c.WriteJSON(
-			game.Event{
-				Type: game.EventTypeMove,
-				Data: game.EventMove{
-					UnitID:    world.MyID,
-					Direction: game.DirectionRight,
-				},
-			})
-
+	//handler right
+	crEvent.keys = []ebiten.Key{ebiten.KeyD, ebiten.KeyRight}
+	crEvent.dir = game.DirectionRight
+	if crEvent.createEventMove() {
 		return
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyUp) {
-		c.WriteJSON(
-			game.Event{
-				Type: game.EventTypeMove,
-				Data: game.EventMove{
-					UnitID:    world.MyID,
-					Direction: game.DirectionUp,
-				},
-			})
-
+	//handler Up
+	crEvent.keys = []ebiten.Key{ebiten.KeyW, ebiten.KeyUp}
+	crEvent.dir = game.DirectionUp
+	if crEvent.createEventMove() {
 		return
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyDown) {
-		c.WriteJSON(
-			game.Event{
-				Type: game.EventTypeMove,
-				Data: game.EventMove{
-					UnitID:    world.MyID,
-					Direction: game.DirectionDown,
-				},
-			})
+	//handler Down
+	crEvent.keys = []ebiten.Key{ebiten.KeyS, ebiten.KeyDown}
+	crEvent.dir = game.DirectionDown
 
+	if crEvent.createEventMove() {
 		return
 	}
 
-	if world.Units[world.MyID].Action == game.ActionRun {
+	//handle Idle
+	if world.Units[world.MyID].Action == game.ActionRun && world.Units[world.MyID].Road == nil {
 		c.WriteJSON(game.Event{
 			Type: game.EventTypeIdle,
 			Data: game.EventIdle{
@@ -70,4 +54,30 @@ func HandleKeyPress(c *websocket.Conn, world *game.World) {
 			},
 		})
 	}
+}
+
+type createEventKey struct {
+	c     *websocket.Conn
+	world *game.World
+	keys  []ebiten.Key
+	dir   game.DirectionType
+}
+
+func (cr *createEventKey) createEventMove() bool {
+	for _, key := range cr.keys {
+		if ebiten.IsKeyPressed(key) {
+			cr.world.Units[cr.world.MyID].Road = nil
+			cr.c.WriteJSON(
+				game.Event{
+					Type: game.EventTypeMove,
+					Data: game.EventMove{
+						UnitID:    cr.world.MyID,
+						Direction: cr.dir,
+					},
+				})
+
+			return true
+		}
+	}
+	return false
 }

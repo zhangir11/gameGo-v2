@@ -5,17 +5,19 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	uuid "github.com/satori/go.uuid"
 )
 
 type Unit struct {
-	ID                  string  `json:"id"`
-	X                   float64 `json:"x"`
-	Y                   float64 `json:"y"`
-	SpriteName          string  `json:"sprite_name"`
-	Action              string  `json:"action"`
-	Frame               int     `json:"frame"`
-	HorizontalDirection int     `json:"horizontal"`
+	ID                  string        `json:"id"`
+	X                   float64       `json:"x"`
+	Y                   float64       `json:"y"`
+	Road                *Coordinate   `json:"coord"`
+	SpriteName          string        `json:"sprite_name"`
+	Action              string        `json:"action"`
+	Frame               int           `json:"frame"`
+	HorizontalDirection DirectionType `json:"horizontal"`
 }
 
 type Units map[string]*Unit
@@ -24,6 +26,7 @@ type World struct {
 	MyID     string `json:"-"`
 	IsServer bool   `json:"-"`
 	Units    `json:"units"`
+	Maps     *ebiten.Image
 }
 
 type Event struct {
@@ -36,8 +39,8 @@ type EventConnection struct {
 }
 
 type EventMove struct {
-	UnitID    string `json:"unit_id"`
-	Direction int    `json:"direction"`
+	UnitID    string        `json:"unit_id"`
+	Direction DirectionType `json:"direction"`
 }
 
 type EventIdle struct {
@@ -61,11 +64,13 @@ const (
 	ActionIdle = "idle"
 )
 
+type DirectionType int
+
 const (
-	DirectionUp    = 0
-	DirectionDown  = 1
-	DirectionLeft  = 2
-	DirectionRight = 3
+	DirectionUp    DirectionType = 0
+	DirectionDown  DirectionType = 1
+	DirectionLeft  DirectionType = 2
+	DirectionRight DirectionType = 3
 )
 
 func (world *World) HandleEvent(event *Event) {

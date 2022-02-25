@@ -39,8 +39,14 @@ func (g *Game) Update() error {
 // Draw draws the game screen.
 // Draw is called every frame (typically 1/60[s] for 60Hz display).
 func (g *Game) Draw(screen *ebiten.Image) {
+	var randerInfo rander.Rander
 	frame++
-	rander.Rander(world, frame, screen)
+	randerInfo = rander.RanderBuild(&world, frame, screen)
+	if world.Maps == nil {
+		randerInfo.RanderMaps()
+	}
+	randerInfo.RanderUnits()
+
 }
 
 // Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
@@ -72,7 +78,7 @@ func main() {
 	game := &Game{}
 
 	// Specify the window size as you like. Here, a doubled size is specified.
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowSize(640, 440)
 	ebiten.SetWindowTitle("Your game's title")
 	// Call ebiten.RunGame to start your game loop.
 	if err := ebiten.RunGame(game); err != nil {
