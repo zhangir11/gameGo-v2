@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"rpg/game"
@@ -140,12 +141,13 @@ func serveWs(hub *Hub, world *game.World, w http.ResponseWriter, r *http.Request
 
 	var pl player.Player
 
-	world.AddUnit(&pl)
+	pl = *world.AddUnit(pl)
+	fmt.Println(pl.GetID(), pl.ID)
 	conn.WriteJSON(game.Event{
 		Type: game.EventTypeInit,
 		Data: game.EventInit{
 			PlayerID: pl.GetID(),
-			Units:    world.Units,
+			Players:  world.Players,
 		},
 	})
 

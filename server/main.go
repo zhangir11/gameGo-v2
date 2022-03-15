@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"rpg/game"
-	"rpg/game/units"
+	"rpg/game/player"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,7 +11,8 @@ import (
 func main() {
 	world := &game.World{
 		IsServer: true,
-		Units:    units.Units{},
+		// Units:    units.Units{},
+		Players: player.Players{},
 	}
 	hub := newHub()
 	go hub.run()
